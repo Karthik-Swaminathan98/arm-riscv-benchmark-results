@@ -13,7 +13,7 @@ Master's thesis — **TU Chemnitz** × **Infineon Technologies**, Dresden (2025)
 
 ![ARM](https://img.shields.io/badge/ARM-Cortex--M4%20PSoC6-blue)
 ![RISCV](https://img.shields.io/badge/RISC--V-Andes%20D25F%20Telink%20B91-orange)
-![Libraries](https://img.shields.io/badge/CMSIS--DSP%2FNN-vs-NMSIS%2FAndes-informational)
+![Libraries](https://img.shields.io/badge/libraries-CMSIS--DSP%20%7C%20CMSIS--NN%20%7C%20NMSIS--DSP%20%7C%20NMSIS--NN%20%7C%20Andes--DSP-red)
 ![Thesis](https://img.shields.io/badge/thesis-TU%20Chemnitz%20%2F%20Infineon%202025-green)
 
 ---
