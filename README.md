@@ -3,7 +3,7 @@
 Cross-architecture performance analysis: **ARM Cortex-M4 (CMSIS)** vs **RISC-V Andes D25F (NMSIS / Andes DSP)**  
 Covers DSP kernels, Neural Network operators, and full model inference measured on real silicon.
 
-Master's thesis — **TU Chemnitz × Infineon Technologies**, Dresden (2025).
+Master's thesis - **TU Chemnitz × Infineon Technologies**, Dresden (2025).
 
 **Source code:**
 - ARM benchmarks → [ARM-Project](https://github.com/Karthik-Swaminathan98/ARM-Project)
