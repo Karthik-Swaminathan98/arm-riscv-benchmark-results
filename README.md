@@ -21,9 +21,9 @@ Master's thesis - **TU Chemnitz × Infineon Technologies**, Dresden (2025).
 
 - NMSIS-NN runs KWS DS-CNN Small **1.44× faster** than CMSIS-NN end-to-end (11.6M vs 16.6M cycles).
 - ANDES Magnitude Q15 runs **3.32× fewer cycles** than CMSIS and uses **14.8× less stack**.
-- On CIFAR-10, NMSIS is up to **6.32× faster** than the ANDES library on Conv2 — fused SIMD MACs vs scalar arithmetic.
+- On CIFAR-10, NMSIS is up to **6.32× faster** than the ANDES library on Conv2 - fused SIMD MACs vs scalar arithmetic.
 - ANDES FIR Q15 is **3.07×** faster than CMSIS at N=1024 using `SMALDA`/`SMALXDA` packed MACs.
-- CMSIS beats NMSIS on FIR F32 cycle count (0.74×) — 8-tap unrolled loop vs 2-tap scalar FPU in ANDES.
+- CMSIS beats NMSIS on FIR F32 cycle count (0.74×)  8-tap unrolled loop vs 2-tap scalar FPU in ANDES.
 
 ---
 
@@ -36,9 +36,9 @@ Master's thesis - **TU Chemnitz × Infineon Technologies**, Dresden (2025).
 | Pipeline | 3-stage in-order | 5-stage in-order |
 | Clock (bench) | 25 MHz | 24 MHz |
 | SRAM | 288 KB | 256 KB |
-| SIMD extensions | DSP, FPU, VFP | P-extension (packed SIMD), FPU |
+| Key Features | FPU, DSP, SIMD | FPU, DSP, P-extension (packed SIMD) |
 
-| ARM — PSoC6 (CY8CKIT-062) | RISC-V — Telink B91 |
+| ARM PSoC6 (CY8CKIT-062) | RISC-V Telink B91 |
 |:---:|:---:|
 | ![PSoC6](images/psoc6_kit.png) | ![Telink B91](images/telink_b91_setup.png) |
 
@@ -68,23 +68,23 @@ Master's thesis - **TU Chemnitz × Infineon Technologies**, Dresden (2025).
 
 ### Execution conditions
 
-All code runs from RAM only — no flash wait-states (`cy_ramfunc` attribute on ARM; vendor linker script on RISC-V). Interrupts are disabled during measurement. Each kernel is a standalone binary. No cache or interrupt activity occurs during measurement.
+All code runs from RAM only, no flash wait-states (`cy_ramfunc` attribute on ARM; vendor linker script on RISC-V). Interrupts are disabled during measurement. Each kernel is a standalone binary. No cache or interrupt activity occurs during measurement.
 
 ### Cycle count
 
 | Platform | Mechanism |
 |---|---|
-| ARM (PSoC6) | `DWT->CYCCNT` — 32-bit hardware cycle counter in the CoreSight DWT unit. Read before and after the kernel under test. |
-| RISC-V (Telink B91) | `NDS_MCYCLE` CSR — 64-bit machine cycle counter. Direct `csrr` instruction read; no overhead from function calls. |
+| ARM (PSoC6) | `DWT->CYCCNT`  32-bit hardware cycle counter in the CoreSight DWT unit. Read before and after the kernel under test. |
+| RISC-V (Telink B91) | `NDS_MCYCLE` CSR 64-bit machine cycle counter. Direct `csrr` instruction read; no overhead from function calls. |
 
 ### Instruction count
 
 | Platform | Mechanism |
 |---|---|
 | ARM (PSoC6) | Derived from DWT auxiliary counters: `CYCCNT − CPICNT − EXCCNT − SLEEPCNT − LSUCNT + FOLDCNT`. This is an approximation; multi-cycle instructions are not decomposed. |
-| RISC-V (Telink B91) | `NDS_MINSTRET` CSR — exact retired instruction count. Every retired instruction is counted by hardware, including RVC (compressed 16-bit) instructions. |
+| RISC-V (Telink B91) | `NDS_MINSTRET` CSR exact retired instruction count. Every retired instruction is counted by hardware, including RVC (compressed 16-bit) instructions. |
 
-### Stack usage — stack-paint technique
+### Stack usage - stack-paint technique
 
 The stack region is pre-filled with the sentinel pattern `0xAAAAAAAA` before kernel execution. After the kernel returns, the stack is scanned from the bottom to find the highest address that no longer contains the sentinel. The difference between the initial stack pointer and this watermark gives the peak stack consumption in bytes. The watermark includes callee-saved registers, prologue/epilogue, and any temporary allocations.
 
@@ -109,11 +109,11 @@ Model inference results (Part 3) show absolute cycle counts for direct compariso
 
 ---
 
-## Part 1 — DSP Kernel Results
+## Part 1: DSP Kernel Results
 
 Three RISC-V library variants are compared against CMSIS-DSP as the baseline. **ANDES** is the Andes proprietary DSP library, using custom P-extension intrinsics. **NMSIS** is the open-source NMSIS-DSP library, the RISC-V community equivalent of CMSIS-DSP.
 
-### 1.1 DSP Summary — All Kernels
+### 1.1 DSP Summary - All Kernels
 
 The charts below span all four DSP kernel groups (Transform/FFT, Magnitude, FIR, Fast Math) across both F32 and Q15 data types.
 
@@ -134,7 +134,7 @@ The charts below span all four DSP kernel groups (Transform/FFT, Magnitude, FIR,
 
 ---
 
-### 1.2 Transform — Complex FFT F32
+### 1.2 Transform - Complex FFT 
 
 FFT size N swept from 32 to 1024. NMSIS and ANDES both outperform CMSIS on cycle count at most sizes. ANDES achieves the largest stack reduction (up to 43× at N=32: 8 B vs 344 B) due to iterative implementation with register-resident twiddle factors.
 
@@ -147,15 +147,11 @@ FFT size N swept from 32 to 1024. NMSIS and ANDES both outperform CMSIS on cycle
 
 ---
 
-### 1.3 Filtering — FIR F32
-
-CMSIS wins on FIR F32 cycle count (ANDES: 0.74×, NMSIS: 2.53×). CMSIS uses an 8-tap unrolled loop; ANDES uses scalar `fmul.s + fadd.s` with a 2-tap unroll, generating more load-store traffic per output despite the FPU being present on both cores.
-
----
-
-### 1.4 Filtering — FIR Q15
+### 1.3 Filtering - FIR 
 
 NMSIS (2.14×) and ANDES (3.07× at large N) both outperform CMSIS on Q15, driven by packed SIMD MACs (`SMALDA`/`SMALXDA`) that process two Q15 samples per instruction. ANDES achieves 15× less stack by keeping the accumulator register-resident.
+
+CMSIS wins on FIR F32 cycle count (ANDES: 0.74×, NMSIS: 2.53×). CMSIS uses an 8-tap unrolled loop; ANDES uses scalar `fmul.s + fadd.s` with a 2-tap unroll, generating more load-store traffic per output despite the FPU being present on both cores.
 
 | Function | Library | Cycle | Instruction | Stack | Code Size |
 |---|---|---|---|---|---|
@@ -166,7 +162,7 @@ NMSIS (2.14×) and ANDES (3.07× at large N) both outperform CMSIS on Q15, drive
 
 ---
 
-### 1.5 Magnitude — Complex Magnitude Q15
+### 1.4 Magnitude - Complex Magnitude 
 
 ANDES achieves **3.32× fewer cycles** on Magnitude Q15 by using a Q15-specific square-root and `pkbb16` packed store to process two samples per iteration, bypassing CMSIS's general-purpose Q31 path. NMSIS provides 1.76× improvement with similar packed operations.
 
@@ -179,7 +175,7 @@ ANDES achieves **3.32× fewer cycles** on Magnitude Q15 by using a Q15-specific 
 
 ---
 
-### 1.6 Fast Math (sqrt, sin, cos, atan2)
+### 1.5 Fast Math (sqrt, sin, cos, atan2)
 
 CMSIS wins on F32 cycle count (ANDES: 0.91×, NMSIS: 0.84×). The CMSIS floating-point math kernels are more mature and better vectorised. ANDES wins on Q15 (1.28×) and achieves 15× less stack through register-resident lookup tables.
 
@@ -192,11 +188,11 @@ CMSIS wins on F32 cycle count (ANDES: 0.91×, NMSIS: 0.84×). The CMSIS floating
 
 ---
 
-## Part 2 — Neural Network Kernel Results
+## Part 2: Neural Network Kernel Results
 
 Comparison: **NMSIS-NN (RISC-V) vs CMSIS-NN (ARM)**. S8 = INT8. S16 = INT16. All kernels tested with representative tensor dimensions from a DS-CNN workload.
 
-### 2.1 NN Summary — All Kernels
+### 2.1 NN Summary - All Kernels
 
 #### Cycle Count Efficiency (NMSIS-NN vs CMSIS-NN)
 ![NN Cycle Count Efficiency](images/NN_cycle_count.png)
@@ -229,7 +225,7 @@ CMSIS wins on S8 cycle count (0.78×). ARM's conditional execution (`it ge / mov
 
 ---
 
-### 2.3 Convolution (Conv2D, Depthwise Conv — S8 and S16)
+### 2.3 Convolution (Conv2D, Depthwise Conv - S8 and S16)
 
 NMSIS wins consistently. P-extension operations (`kmada`, `sunpkd820`, `pktt16`/`pkbb16`) collapse the ARM 12–16 instruction unpack-MAC sequence into 6–8 instructions, nearly halving dynamic instruction cost per output element.
 
@@ -256,7 +252,7 @@ NMSIS wins on S8 (1.13×). CMSIS wins on S16 (0.85×): back-to-back `kmada` inst
 
 ---
 
-### 2.5 Pooling — Average Pooling (S8 and S16)
+### 2.5 Pooling (S8 and S16)
 
 | Metric | NMSIS S8 | NMSIS S16 |
 |---|---|---|
@@ -281,7 +277,7 @@ NMSIS wins on both datatypes for cycles and instructions. On S8 stack, NMSIS all
 
 ---
 
-## Part 3 — Model Inference Results
+## Part 3: Model Inference Results
 
 End-to-end bare-metal inference. No OS, no runtime. Each model is compiled with CMSIS-NN (ARM) and NMSIS-NN (RISC-V) quantised kernels and executed layer-by-layer with per-layer cycle and stack measurement.
 
@@ -317,7 +313,7 @@ NMSIS outperforms ANDES on every Conv and Pool layer. The Conv2 gap (6.32×) ref
 
 ---
 
-### 3.2 Keyword Spotting — DS-CNN Small
+### 3.2 Keyword Spotting (DS-CNN Small)
 
 **Platform comparison:** ARM Cortex-M4 (CMSIS-NN) vs RISC-V Andes D25F (NMSIS-NN)  
 **Model:** DS-CNN Small (INT8), 10-class keyword recognition, 13 layers
@@ -351,9 +347,9 @@ NMSIS runs the full DS-CNN Small model **1.44× faster** (16.6M vs 11.6M cycles)
 
 ---
 
-### 3.3 Keyword Spotting — DS-CNN Medium
+### 3.3 Keyword Spotting (DS-CNN Medium)
 
-**Model:** DS-CNN Medium (INT8) — same topology as Small, larger feature maps (more channels)
+**Model:** DS-CNN Medium (INT8) - same topology as Small, larger feature maps (more channels)
 
 | Layer | CMSIS cycles | NMSIS cycles | NMSIS speedup |
 |---|---|---|---|
@@ -376,7 +372,7 @@ NMSIS runs DS-CNN Medium **1.37× faster** (46.5M vs 34.0M cycles). Depthwise co
 
 ---
 
-## Part 4 — Key Takeaways
+## Part 4: Key Takeaways
 
 ### Where RISC-V (NMSIS / Andes) wins
 
@@ -405,7 +401,7 @@ NMSIS runs DS-CNN Medium **1.37× faster** (46.5M vs 34.0M cycles). Depthwise co
 
 ### Overall conclusion
 
-RISC-V libraries match or beat CMSIS on most fixed-point DSP and quantised NN kernels. Depthwise convolution gains compound across model layers: KWS inference runs 1.37–1.44× faster on RISC-V. ARM holds advantages on FIR F32, ReLU6 S8, and Fully Connected S16 — cases where conditional execution or tight MAC scheduling offset the P-extension gains.
+RISC-V libraries match or beat CMSIS on most fixed-point DSP and quantised NN kernels. Depthwise convolution gains compound across model layers: KWS inference runs 1.37–1.44× faster on RISC-V. ARM holds advantages on FIR F32, ReLU6 S8, and Fully Connected S16 cases where conditional execution or tight MAC scheduling offset the P-extension gains.
 
 ---
 
@@ -421,6 +417,6 @@ Supervised by Prof. Dr. Alejandro Masrur · Mr. Daniel Markert · Dr. Elias Trom
 
 ## Author
 
-**Karthik Swaminathan** — Embedded Firmware Engineer  
+**Karthik Swaminathan** Embedded Firmware Engineer  
 M.Sc. Embedded Systems · TU Chemnitz  
 [LinkedIn](https://linkedin.com/in/karthik-swaminathan98) · karthik94870@gmail.com
